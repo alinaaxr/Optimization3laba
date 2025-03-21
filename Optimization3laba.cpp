@@ -30,35 +30,36 @@ void printSimplexTable(const vector<vector<double>>& A, const vector<double>& b,
     }
     cout << fixed << setprecision(6) << v << "\n\n";
 }
-
-void pivot(vector<int>& N, vector<int>& B, vector<vector<double>>& A, vector<double>& b, vector<double>& c, double& v, int l, int e) {   //ПОВОРОТ
+//l - строка для поворота
+//vhodperemen - столбец для поворота
+void change(vector<int>& N, vector<int>& B, vector<vector<double>>& A, vector<double>& b, vector<double>& c, double& v, int l, int vhodperemen) {   //ПОВОРОТ
     int m = A.size();
     int n = A[0].size();
 
-    b[l] /= A[l][e];   //для выбора ведущего элемента
-    for (int j = 0; j < n; ++j) {  //обновление значений для всех строк кроме L
-        if (j != e) A[l][j] /= A[l][e];
+    b[l] /= A[l][vhodperemen];  //A[l][vhodperemen] - ведущий элемент
+    for (int j = 0; j < n; ++j) {  
+        if (j != vhodperemen) A[l][j] /= A[l][vhodperemen];  //A[l][vhodperemen] должен стать 1
     }
-    A[l][e] = 1 / A[l][e];
+    A[l][vhodperemen] = 1 / A[l][vhodperemen];
 
-    for (int i = 0; i < m; ++i) {
+    for (int i = 0; i < m; ++i) {  //обновление значений для всех строк кроме L
         if (i != l) {
-            b[i] -= A[i][e] * b[l];
+            b[i] -= A[i][vhodperemen] * b[l];
             for (int j = 0; j < n; ++j) {
-                if (j != e) A[i][j] -= A[i][e] * A[l][j];
+                if (j != vhodperemen) A[i][j] -= A[i][vhodperemen] * A[l][j];
             }
-            A[i][e] = -A[i][e] * A[l][e];
+            A[i][vhodperemen] = -A[i][vhodperemen] * A[l][vhodperemen];
         }
     }
 
-    v += c[e] * b[l];     //обновление коэффициентов целевой функции
+    v += c[vhodperemen] * b[l];     //обновление коэффициентов целевой функции
     for (int j = 0; j < n; ++j) {
-        if (j != e) c[j] -= c[e] * A[l][j];
+        if (j != vhodperemen) c[j] -= c[vhodperemen] * A[l][j];
     }
-    c[e] = -c[e] * A[l][e];
+    c[vhodperemen] = -c[vhodperemen] * A[l][vhodperemen];
 
-    swap(N[e], B[l]);  //Меняем местами небазисную переменную N[e] и базисную переменную B[l]. 
-                     //Это отражает тот факт, что переменная e теперь входит в базис, а переменная l выходит из базиса
+    swap(N[vhodperemen], B[l]);  //Меняем местами небазисную переменную N[vhodperemen] и базисную переменную B[l]. 
+                     //Это отражает тот факт, что переменная vhodperemen теперь входит в базис, а переменная l выходит из базиса
 }
 
 
@@ -66,9 +67,9 @@ void simplex(vector<vector<double>> A, vector<double> b, vector<double> c, bool 
     try {
         int m = A.size();
         int n = A[0].size();
-        vector<int> N(n); // Неосновные переменные
-        vector<int> B(m); // Основные переменные
-        double v = 0;     // Значение целевой функции
+        vector<int> N(n); 
+        vector<int> B(m);
+        double v = 0; 
 
         for (int i = 0; i < n; ++i) N[i] = i + 1;
         for (int i = 0; i < m; ++i) B[i] = n + i + 1;
@@ -77,19 +78,19 @@ void simplex(vector<vector<double>> A, vector<double> b, vector<double> c, bool 
         printSimplexTable(A, b, c, v, N, B);
 
         while (true) {
-            int e = -1;
+            int vhodperemen = -1;   //для улучшения целевой функции
             for (int j = 0; j < n; ++j) {
                 if (c[j] > 0) {
-                    e = j;
+                    vhodperemen = j;
                     break;
                 }
             }
-            if (e == -1) break;
+            if (vhodperemen == -1) break;
 
             vector<double> delta(m, numeric_limits<double>::infinity());   //выбор исключаемой переменной
             for (int i = 0; i < m; ++i) {
-                if (A[i][e] > 0) {
-                    delta[i] = b[i] / A[i][e];
+                if (A[i][vhodperemen] > 0) {
+                    delta[i] = b[i] / A[i][vhodperemen];
                 }
             }
 
@@ -97,7 +98,7 @@ void simplex(vector<vector<double>> A, vector<double> b, vector<double> c, bool 
             if (delta[l] == numeric_limits<double>::infinity()) {
                 return;
             }
-            pivot(N, B, A, b, c, v, l, e);
+            change(N, B, A, b, c, v, l, vhodperemen);
 
             
         }
